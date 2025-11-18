@@ -1,6 +1,8 @@
 🌟 Project Title: Neon VPN Proxy Control
     A prototype web interface for a Secure Cloud Access / VPN system, featuring a retro-futuristic, neon-hacked aesthetic. This project simulates the core functions of a VPN client: connection, server selection, and proxying web requests to demonstrate the concept of IP obfuscation.
-    
+
+<img width="1794" height="830" alt="Screenshot (22)" src="https://github.com/user-attachments/assets/ae09bdfe-b3d0-4627-a01e-0f620157ea4a" />
+
   ✨ Key Features
       Cyberpunk Aesthetic: A responsive, dark-mode design with glowing neon accents using pure HTML/CSS.
       
