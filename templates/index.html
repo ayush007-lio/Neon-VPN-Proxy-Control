@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE CLOUD ACCESS // VPN</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-dark: #0a0a12;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000 100%);
+        }
+
+        .container {
+            display: flex;
+            width: 90%;
+            height: 85vh;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+
+        /* Sidebar Control Panel */
+        .sidebar {
+            width: 30%;
+            padding: 30px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            text-shadow: 0 0 10px var(--neon-blue);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: red;
+            border-radius: 50%;
+            box-shadow: 0 0 10px red;
+            transition: 0.3s;
+        }
+
+        .active .dot {
+            background-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--neon-blue);
+            color: white;
+            border-radius: 5px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            padding: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
+        /* Main Display Area */
+        .display-area {
+            width: 70%;
+            padding: 30px;
+            position: relative;
+        }
+
+        .terminal {
+            background: black;
+            height: 100%;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            font-size: 14px;
+            color: #0f0;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="sidebar">
+            <h1>CLOUD VPN_PRO</h1>
+            <div class="status-indicator" id="statusBox">
+                <div class="dot"></div>
+                <span id="statusText">DISCONNECTED</span>
+            </div>
+
+            <label>Select Tunnel Location:</label>
+            <select id="serverSelect">
+                {% for name, ip in servers.items() %}
+                    <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <button onclick="toggleConnection()" id="connBtn">Initialize Uplink</button>
+
+            <hr style="border-color: rgba(255,255,255,0.1); width:100%">
+
+            <label>Secure Browser:</label>
+            <input type="text" id="urlInput" placeholder="www.example.com" disabled>
+            <button onclick="fetchUrl()" id="browseBtn" disabled>Access URL</button>
+        </div>
+
+        <div class="display-area">
+            <div class="grid-bg"></div>
+            <div class="terminal" id="terminal">
+                <div class="log-entry">> System initialized...</div>
+                <div class="log-entry">> Waiting for server selection...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = false;
+
+        function log(message) {
+            const terminal = document.getElementById('terminal');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerText = `> ${message}`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        async function toggleConnection() {
+            const btn = document.getElementById('connBtn');
+            const server = document.getElementById('serverSelect').value;
+            
+            if (!isConnected) {
+                btn.innerText = "Negotiating...";
+                log(`Initiating Handshake with ${server}...`);
+                
+                const response = await fetch('/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({server: server})
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'connected') {
+                    isConnected = true;
+                    document.getElementById('statusBox').classList.add('active');
+                    document.getElementById('statusText').innerText = "SECURE TUNNEL ACTIVE";
+                    document.getElementById('statusText').style.color = "var(--neon-blue)";
+                    btn.innerText = "Terminate Connection";
+                    btn.style.background = "linear-gradient(45deg, #ff0055, #ff4444)";
+                    
+                    document.getElementById('urlInput').disabled = false;
+                    document.getElementById('browseBtn').disabled = false;
+                    
+                    log(data.message);
+                    log(`Assigned Virtual IP: ${data.new_ip}`);
+                }
+            } else {
+                isConnected = false;
+                document.getElementById('statusBox').classList.remove('active');
+                document.getElementById('statusText').innerText = "DISCONNECTED";
+                document.getElementById('statusText').style.color = "white";
+                btn.innerText = "Initialize Uplink";
+                btn.style.background = "linear-gradient(45deg, var(--neon-blue), var(--neon-purple))";
+                
+                document.getElementById('urlInput').disabled = true;
+                document.getElementById('browseBtn').disabled = true;
+                log("Connection terminated. Local IP revealed.");
+            }
+        }
+
+        async function fetchUrl() {
+            const url = document.getElementById('urlInput').value;
+            log(`Requesting ${url} via Secure Tunnel...`);
+            
+            const response = await fetch('/proxy', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url})
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                log(`Data received (Status: ${data.code})`);
+                log("--- START OF ENCRYPTED PACKET ---");
+                log(data.content_preview);
+                log("--- END OF PACKET ---");
+            } else {
+                log(`ERROR: ${data.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
